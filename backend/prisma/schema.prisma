@@ -1,0 +1,21 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  document  String?  @unique
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("companies")
+}

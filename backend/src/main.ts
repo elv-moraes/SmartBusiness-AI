@@ -3,6 +3,11 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+
+bootstrap().catch((error: unknown) => {
+  console.error('Failed to start SmartBusiness AI API:', error);
+  process.exit(1);
+});

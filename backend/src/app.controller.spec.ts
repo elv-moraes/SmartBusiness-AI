@@ -15,8 +15,14 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return SmartBusiness AI information', () => {
+      expect(appController.getHello()).toEqual({
+        name: 'SmartBusiness AI',
+        version: '1.0.0',
+        status: 'online',
+        slogan: 'Gerencie melhor. Decida com inteligência.',
+        message: 'Bem-vindo ao SmartBusiness AI!',
+      });
     });
   });
 });
