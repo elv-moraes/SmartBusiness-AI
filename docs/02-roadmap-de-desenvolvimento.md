@@ -68,7 +68,7 @@ Este roadmap poderá ser atualizado conforme o projeto evoluir.
 - Testes unitários
 - Testes reais com PostgreSQL
 
-## 5. Usuários e vínculo com empresas 🚧
+## 5. Usuários e vínculo com empresas ✅
 
 - Criar modelo `User`
 - Relacionar usuários e empresas
@@ -86,7 +86,7 @@ Papéis iniciais previstos:
 - Gerente
 - Funcionário
 
-## 6. Autenticação e autorização ⏳
+## 6. Autenticação e autorização 🚧
 
 - Cadastro seguro de senha
 - Criptografia de senha
@@ -340,6 +340,6 @@ Atividades:
 
 A etapa atual do SmartBusiness AI é:
 
-> **Fase 2 — Usuários e vínculo com empresas**
+> **Fase 2 — Autenticação e autorização**
 
-O próximo objetivo técnico é criar o modelo `User` no Prisma e estabelecer sua relação com o modelo `Company`.
+O próximo objetivo técnico é implementar o login, validar senhas com Argon2, gerar tokens JWT e obter a empresa diretamente do usuário autenticado.
