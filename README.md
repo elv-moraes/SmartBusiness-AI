@@ -1,14 +1,14 @@
-# SmartBusiness AI
+# Business AI
 
 > **Gerencie melhor. Decida com inteligência.**
 
-O **SmartBusiness AI** é uma plataforma inteligente de gestão para pequenos negócios que combina ferramentas tradicionais de administração com Inteligência Artificial para auxiliar empreendedores na tomada de decisões.
+O **Business AI** é uma plataforma inteligente de gestão para emprendedores que combina ferramentas tradicionais de administração com Inteligência Artificial para auxiliar empreendedores na tomada de decisões.
 
 ---
 
 # Objetivo
 
-Ajudar pequenos empreendedores a administrar seus negócios de forma simples, organizada e inteligente.
+Ajudar empreendedores a administrar seus negócios de forma simples, organizada e inteligente.
 
 ---
 
