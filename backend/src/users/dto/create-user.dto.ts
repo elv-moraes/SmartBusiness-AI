@@ -4,7 +4,6 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsUUID,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -19,9 +18,6 @@ function normalizeEmail({ value }: { value: unknown }): unknown {
 }
 
 export class CreateUserDto {
-  @IsUUID('4')
-  companyId: string;
-
   @Transform(trimString)
   @IsString()
   @MinLength(2)

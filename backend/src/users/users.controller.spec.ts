@@ -1,4 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { AuthGuard } from '../auth/auth.guard';
+import type { AuthenticatedRequest } from '../auth/authenticated-request.interface';
+import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../generated/prisma/enums';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
@@ -9,10 +12,18 @@ describe('UsersController', () => {
   const usersServiceMock = {
     create: jest.fn(),
     findAll: jest.fn(),
-    findOne: jest.fn(),
-    update: jest.fn(),
-    remove: jest.fn(),
   };
+
+  const companyId = '550e8400-e29b-41d4-a716-446655440000';
+  const userId = '123e4567-e89b-42d3-a456-426614174000';
+
+  const request = {
+    user: {
+      sub: userId,
+      companyId,
+      role: UserRole.OWNER,
+    },
+  } as unknown as AuthenticatedRequest;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -25,7 +36,16 @@ describe('UsersController', () => {
           useValue: usersServiceMock,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({
+        canActivate: () => true,
+      })
+      .overrideGuard(RolesGuard)
+      .useValue({
+        canActivate: () => true,
+      })
+      .compile();
 
     controller = module.get<UsersController>(UsersController);
   });
@@ -34,39 +54,48 @@ describe('UsersController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should delegate user creation to the service', async () => {
+  it('should delegate user creation using companyId from JWT', async () => {
     const dto = {
-      companyId: '550e8400-e29b-41d4-a716-446655440000',
       name: 'Usuário Teste',
       email: 'usuario@empresa.com',
       password: 'SenhaTeste123!',
-      role: UserRole.OWNER,
+      role: UserRole.EMPLOYEE,
     };
 
-    const user = {
-      id: '123e4567-e89b-42d3-a456-426614174000',
-      companyId: dto.companyId,
+    const result = {
+      id: userId,
+      companyId,
       name: dto.name,
       email: dto.email,
       role: dto.role,
       isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
 
-    usersServiceMock.create.mockResolvedValue(user);
+    usersServiceMock.create.mockResolvedValue(result);
 
-    await expect(controller.create(dto)).resolves.toEqual(user);
+    await expect(controller.create(request, dto)).resolves.toEqual(result);
 
-    expect(usersServiceMock.create).toHaveBeenCalledWith(dto);
+    expect(usersServiceMock.create).toHaveBeenCalledWith({
+      ...dto,
+      companyId,
+    });
   });
 
-  it('should delegate company user listing to the service', async () => {
-    const companyId = '550e8400-e29b-41d4-a716-446655440000';
+  it('should delegate company user listing using companyId from JWT', async () => {
+    const result = [
+      {
+        id: userId,
+        companyId,
+        name: 'Usuário Teste',
+        email: 'usuario@empresa.com',
+        role: UserRole.EMPLOYEE,
+        isActive: true,
+      },
+    ];
 
-    usersServiceMock.findAll.mockResolvedValue([]);
+    usersServiceMock.findAll.mockResolvedValue(result);
 
-    await expect(controller.findAll(companyId)).resolves.toEqual([]);
+    await expect(controller.findAll(request)).resolves.toEqual(result);
 
     expect(usersServiceMock.findAll).toHaveBeenCalledWith(companyId);
   });

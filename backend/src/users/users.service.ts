@@ -23,7 +23,7 @@ export class UsersService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto & { companyId: string }) {
     const { password, ...userData } = createUserDto;
 
     await this.ensureCompanyExists(userData.companyId);
