@@ -86,7 +86,7 @@ Papéis iniciais previstos:
 - Gerente
 - Funcionário
 
-## 6. Autenticação e autorização 🚧
+## 6. Autenticação e autorização ✅
 
 - Cadastro seguro de senha
 - Criptografia de senha
@@ -338,8 +338,8 @@ Atividades:
 
 # Etapa Atual
 
-A etapa atual do SmartBusiness AI é:
+A etapa atual do Business AI é:
 
-> **Fase 2 — Autenticação e autorização**
+> **Fase 3 — Catálogo e Estoque**
 
-O próximo objetivo técnico é implementar o login, validar senhas com Argon2, gerar tokens JWT e obter a empresa diretamente do usuário autenticado.
+O próximo objetivo técnico é implementar o módulo de categorias, vinculando cada categoria à empresa do usuário autenticado e garantindo o isolamento multiempresa.
