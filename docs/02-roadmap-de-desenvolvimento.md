@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Este documento registra a ordem planejada para o desenvolvimento do SmartBusiness AI.
+Este documento registra a ordem planejada para o desenvolvimento do Business AI.
 
 Ele serve para:
 
@@ -102,7 +102,7 @@ Papéis iniciais previstos:
 
 # Fase 3 — Catálogo e Estoque
 
-## 7. Categorias ⏳
+## 7. Categorias ✅
 
 - Cadastro de categorias
 - Vinculação com a empresa
@@ -342,4 +342,4 @@ A etapa atual do Business AI é:
 
 > **Fase 3 — Catálogo e Estoque**
 
-O próximo objetivo técnico é implementar o módulo de categorias, vinculando cada categoria à empresa do usuário autenticado e garantindo o isolamento multiempresa.
+O próximo objetivo técnico é implementar o módulo de produtos, vinculando cada produto à empresa do usuário autenticado e, quando aplicável, a uma categoria da mesma empresa, garantindo o isolamento multiempresa.
