@@ -110,6 +110,24 @@ Papéis iniciais previstos:
 - Isolamento multiempresa
 - Testes
 
+## Preparação técnica antes de Produtos 🚧
+
+Segurança:
+
+- Rate limiting, com atenção especial ao login
+- Security headers / Helmet
+- Configuração explícita de CORS
+- Definição e validação da estratégia de RLS para tabelas multiempresa
+
+Integridade e concorrência:
+
+- Estratégia de optimistic locking
+- Transações para operações de estoque e vendas
+- Atualizações atômicas de estoque
+- Idempotência para operações críticas e integrações
+- Histórico obrigatório de movimentações de estoque
+- IA utilizando os mesmos serviços de domínio e validações
+
 ## 8. Produtos ⏳
 
 - Cadastro de produtos
@@ -342,4 +360,4 @@ A etapa atual do Business AI é:
 
 > **Fase 3 — Catálogo e Estoque**
 
-O próximo objetivo técnico é implementar o módulo de produtos, vinculando cada produto à empresa do usuário autenticado e, quando aplicável, a uma categoria da mesma empresa, garantindo o isolamento multiempresa.
+O próximo objetivo técnico é realizar uma preparação de segurança, integridade e concorrência antes de iniciar o módulo de produtos.
