@@ -1,7 +1,9 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/prisma/client';
+import { Prisma, PrismaClient } from '../generated/prisma/client';
+
+export type PrismaTransactionClient = Prisma.TransactionClient;
 
 @Injectable()
 export class PrismaService
@@ -24,5 +26,16 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
+  }
+
+  withCompanyContext<T>(
+    companyId: string,
+    callback: (tx: PrismaTransactionClient) => Promise<T>,
+  ): Promise<T> {
+    return this.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT set_config('app.company_id', ${companyId}, true)`;
+
+      return callback(tx);
+    });
   }
 }

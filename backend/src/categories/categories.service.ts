@@ -3,7 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import {
+  PrismaService,
+  PrismaTransactionClient,
+} from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
@@ -13,11 +16,13 @@ export class CategoriesService {
 
   async create(companyId: string, createCategoryDto: CreateCategoryDto) {
     try {
-      return await this.prisma.category.create({
-        data: {
-          companyId,
-          name: createCategoryDto.name,
-        },
+      return await this.prisma.withCompanyContext(companyId, (tx) => {
+        return tx.category.create({
+          data: {
+            companyId,
+            name: createCategoryDto.name,
+          },
+        });
       });
     } catch (error: unknown) {
       this.handlePrismaError(error);
@@ -25,18 +30,71 @@ export class CategoriesService {
   }
 
   findAll(companyId: string) {
-    return this.prisma.category.findMany({
-      where: {
-        companyId,
-      },
-      orderBy: {
-        name: 'asc',
-      },
+    return this.prisma.withCompanyContext(companyId, (tx) => {
+      return tx.category.findMany({
+        where: {
+          companyId,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      });
     });
   }
 
   async findOne(id: string, companyId: string) {
-    const category = await this.prisma.category.findFirst({
+    return this.prisma.withCompanyContext(companyId, (tx) => {
+      return this.findOneInTransaction(tx, id, companyId);
+    });
+  }
+
+  async update(
+    id: string,
+    companyId: string,
+    updateCategoryDto: UpdateCategoryDto,
+  ) {
+    try {
+      return await this.prisma.withCompanyContext(companyId, async (tx) => {
+        const result = await tx.category.updateMany({
+          where: {
+            id,
+            companyId,
+          },
+          data: updateCategoryDto,
+        });
+
+        if (result.count === 0) {
+          throw new NotFoundException('Categoria não encontrada.');
+        }
+
+        return this.findOneInTransaction(tx, id, companyId);
+      });
+    } catch (error: unknown) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async remove(id: string, companyId: string): Promise<void> {
+    await this.prisma.withCompanyContext(companyId, async (tx) => {
+      const result = await tx.category.deleteMany({
+        where: {
+          id,
+          companyId,
+        },
+      });
+
+      if (result.count === 0) {
+        throw new NotFoundException('Categoria não encontrada.');
+      }
+    });
+  }
+
+  private async findOneInTransaction(
+    tx: PrismaTransactionClient,
+    id: string,
+    companyId: string,
+  ) {
+    const category = await tx.category.findFirst({
       where: {
         id,
         companyId,
@@ -48,43 +106,6 @@ export class CategoriesService {
     }
 
     return category;
-  }
-
-  async update(
-    id: string,
-    companyId: string,
-    updateCategoryDto: UpdateCategoryDto,
-  ) {
-    try {
-      const result = await this.prisma.category.updateMany({
-        where: {
-          id,
-          companyId,
-        },
-        data: updateCategoryDto,
-      });
-
-      if (result.count === 0) {
-        throw new NotFoundException('Categoria não encontrada.');
-      }
-
-      return this.findOne(id, companyId);
-    } catch (error: unknown) {
-      this.handlePrismaError(error);
-    }
-  }
-
-  async remove(id: string, companyId: string): Promise<void> {
-    const result = await this.prisma.category.deleteMany({
-      where: {
-        id,
-        companyId,
-      },
-    });
-
-    if (result.count === 0) {
-      throw new NotFoundException('Categoria não encontrada.');
-    }
   }
 
   private handlePrismaError(error: unknown): never {

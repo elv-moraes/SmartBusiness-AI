@@ -6,7 +6,18 @@ import { CategoriesService } from './categories.service';
 describe('CategoriesService', () => {
   let service: CategoriesService;
 
+  const txMock = {
+    category: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      updateMany: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+  };
+
   const prismaServiceMock = {
+    withCompanyContext: jest.fn(),
     category: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -31,6 +42,12 @@ describe('CategoriesService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    prismaServiceMock.withCompanyContext.mockImplementation(
+      (_companyId: string, callback: (tx: typeof txMock) => unknown) => {
+        return Promise.resolve(callback(txMock));
+      },
+    );
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CategoriesService,
@@ -48,25 +65,30 @@ describe('CategoriesService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should create a category with companyId received separately', async () => {
+  it('should create a category with companyId received separately using tx', async () => {
     const dto = {
       name: 'Bebidas',
     };
 
-    prismaServiceMock.category.create.mockResolvedValue(category);
+    txMock.category.create.mockResolvedValue(category);
 
     await expect(service.create(companyId, dto)).resolves.toEqual(category);
 
-    expect(prismaServiceMock.category.create).toHaveBeenCalledWith({
+    expect(prismaServiceMock.withCompanyContext).toHaveBeenCalledWith(
+      companyId,
+      expect.any(Function),
+    );
+    expect(txMock.category.create).toHaveBeenCalledWith({
       data: {
         companyId,
         name: dto.name,
       },
     });
+    expect(prismaServiceMock.category.create).not.toHaveBeenCalled();
   });
 
   it('should throw ConflictException when creating a duplicated category name', async () => {
-    prismaServiceMock.category.create.mockRejectedValue({
+    txMock.category.create.mockRejectedValue({
       code: 'P2002',
     });
 
@@ -77,12 +99,16 @@ describe('CategoriesService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
-  it('should list only categories from the informed company ordered by name', async () => {
-    prismaServiceMock.category.findMany.mockResolvedValue([category]);
+  it('should list only categories from the informed company ordered by name using tx', async () => {
+    txMock.category.findMany.mockResolvedValue([category]);
 
     await expect(service.findAll(companyId)).resolves.toEqual([category]);
 
-    expect(prismaServiceMock.category.findMany).toHaveBeenCalledWith({
+    expect(prismaServiceMock.withCompanyContext).toHaveBeenCalledWith(
+      companyId,
+      expect.any(Function),
+    );
+    expect(txMock.category.findMany).toHaveBeenCalledWith({
       where: {
         companyId,
       },
@@ -90,25 +116,31 @@ describe('CategoriesService', () => {
         name: 'asc',
       },
     });
+    expect(prismaServiceMock.category.findMany).not.toHaveBeenCalled();
   });
 
-  it('should find one category by id and companyId', async () => {
-    prismaServiceMock.category.findFirst.mockResolvedValue(category);
+  it('should find one category by id and companyId using tx', async () => {
+    txMock.category.findFirst.mockResolvedValue(category);
 
     await expect(service.findOne(categoryId, companyId)).resolves.toEqual(
       category,
     );
 
-    expect(prismaServiceMock.category.findFirst).toHaveBeenCalledWith({
+    expect(prismaServiceMock.withCompanyContext).toHaveBeenCalledWith(
+      companyId,
+      expect.any(Function),
+    );
+    expect(txMock.category.findFirst).toHaveBeenCalledWith({
       where: {
         id: categoryId,
         companyId,
       },
     });
+    expect(prismaServiceMock.category.findFirst).not.toHaveBeenCalled();
   });
 
   it('should throw NotFoundException when category does not exist', async () => {
-    prismaServiceMock.category.findFirst.mockResolvedValue(null);
+    txMock.category.findFirst.mockResolvedValue(null);
 
     await expect(service.findOne(categoryId, companyId)).rejects.toThrow(
       NotFoundException,
@@ -116,13 +148,13 @@ describe('CategoriesService', () => {
   });
 
   it('should not access a category from another company', async () => {
-    prismaServiceMock.category.findFirst.mockResolvedValue(null);
+    txMock.category.findFirst.mockResolvedValue(null);
 
     await expect(service.findOne(categoryId, otherCompanyId)).rejects.toThrow(
       NotFoundException,
     );
 
-    expect(prismaServiceMock.category.findFirst).toHaveBeenCalledWith({
+    expect(txMock.category.findFirst).toHaveBeenCalledWith({
       where: {
         id: categoryId,
         companyId: otherCompanyId,
@@ -130,16 +162,16 @@ describe('CategoriesService', () => {
     });
   });
 
-  it('should update a category scoped by id and companyId', async () => {
+  it('should update a category scoped by id and companyId using tx', async () => {
     const updatedCategory = {
       ...category,
       name: 'Alimentos',
     };
 
-    prismaServiceMock.category.updateMany.mockResolvedValue({
+    txMock.category.updateMany.mockResolvedValue({
       count: 1,
     });
-    prismaServiceMock.category.findFirst.mockResolvedValue(updatedCategory);
+    txMock.category.findFirst.mockResolvedValue(updatedCategory);
 
     await expect(
       service.update(categoryId, companyId, {
@@ -147,7 +179,11 @@ describe('CategoriesService', () => {
       }),
     ).resolves.toEqual(updatedCategory);
 
-    expect(prismaServiceMock.category.updateMany).toHaveBeenCalledWith({
+    expect(prismaServiceMock.withCompanyContext).toHaveBeenCalledWith(
+      companyId,
+      expect.any(Function),
+    );
+    expect(txMock.category.updateMany).toHaveBeenCalledWith({
       where: {
         id: categoryId,
         companyId,
@@ -156,10 +192,18 @@ describe('CategoriesService', () => {
         name: 'Alimentos',
       },
     });
+    expect(txMock.category.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: categoryId,
+        companyId,
+      },
+    });
+    expect(prismaServiceMock.category.updateMany).not.toHaveBeenCalled();
+    expect(prismaServiceMock.category.findFirst).not.toHaveBeenCalled();
   });
 
   it('should throw NotFoundException when updating a category from another company', async () => {
-    prismaServiceMock.category.updateMany.mockResolvedValue({
+    txMock.category.updateMany.mockResolvedValue({
       count: 0,
     });
 
@@ -169,11 +213,20 @@ describe('CategoriesService', () => {
       }),
     ).rejects.toThrow(NotFoundException);
 
-    expect(prismaServiceMock.category.findFirst).not.toHaveBeenCalled();
+    expect(txMock.category.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: categoryId,
+        companyId: otherCompanyId,
+      },
+      data: {
+        name: 'Alimentos',
+      },
+    });
+    expect(txMock.category.findFirst).not.toHaveBeenCalled();
   });
 
   it('should throw ConflictException when renaming to a duplicated name', async () => {
-    prismaServiceMock.category.updateMany.mockRejectedValue({
+    txMock.category.updateMany.mockRejectedValue({
       code: 'P2002',
     });
 
@@ -184,8 +237,8 @@ describe('CategoriesService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
-  it('should remove a category scoped by id and companyId', async () => {
-    prismaServiceMock.category.deleteMany.mockResolvedValue({
+  it('should remove a category scoped by id and companyId using tx', async () => {
+    txMock.category.deleteMany.mockResolvedValue({
       count: 1,
     });
 
@@ -193,21 +246,33 @@ describe('CategoriesService', () => {
       service.remove(categoryId, companyId),
     ).resolves.toBeUndefined();
 
-    expect(prismaServiceMock.category.deleteMany).toHaveBeenCalledWith({
+    expect(prismaServiceMock.withCompanyContext).toHaveBeenCalledWith(
+      companyId,
+      expect.any(Function),
+    );
+    expect(txMock.category.deleteMany).toHaveBeenCalledWith({
       where: {
         id: categoryId,
         companyId,
       },
     });
+    expect(prismaServiceMock.category.deleteMany).not.toHaveBeenCalled();
   });
 
   it('should throw NotFoundException when removing a category from another company', async () => {
-    prismaServiceMock.category.deleteMany.mockResolvedValue({
+    txMock.category.deleteMany.mockResolvedValue({
       count: 0,
     });
 
     await expect(service.remove(categoryId, otherCompanyId)).rejects.toThrow(
       NotFoundException,
     );
+
+    expect(txMock.category.deleteMany).toHaveBeenCalledWith({
+      where: {
+        id: categoryId,
+        companyId: otherCompanyId,
+      },
+    });
   });
 });
