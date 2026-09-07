@@ -124,9 +124,78 @@ Decisões:
 
 - `companyId` continua vindo do usuário autenticado.
 - Services continuam filtrando dados por `companyId`.
-- RLS será uma segunda barreira de proteção no PostgreSQL.
+- RLS será uma segunda barreira de proteção no PostgreSQL, não um substituto dos filtros da aplicação.
+- O primeiro rollout de RLS será feito em `categories`.
+- O runtime da API não deve ser owner das tabelas protegidas e deve permanecer com `BYPASSRLS=false`.
+- O contexto de empresa para RLS será obtido de `app.company_id`, definido dentro da transação.
+- As policies devem usar a forma defensiva `NULLIF(current_setting('app.company_id', true), '')::uuid`.
+- A ausência de contexto deve resultar em comportamento fail closed.
 - A implementação deve considerar corretamente Prisma, transações e pool de conexões.
+- `users` exige tratamento especial, porque o login ocorre antes de existir `companyId` autenticado.
+- A solução definitiva de login pré-tenant será implementada antes de habilitar RLS em `users`.
 - Não implementar uma solução de RLS insegura apenas para cumprir a decisão.
+
+## 10.1. Contexto transacional multiempresa
+
+O `PrismaService` possui o helper `withCompanyContext(companyId, callback)` para executar operações com contexto de empresa preparado para o futuro RLS.
+
+Decisões:
+
+- O contexto da empresa é definido dentro de uma transação Prisma interativa.
+- O PostgreSQL recebe o contexto por `set_config('app.company_id', ..., true)`.
+- O terceiro argumento `true` torna o valor LOCAL à transação.
+- Nunca usar `SET` de sessão global para `companyId`.
+- Todas as queries protegidas por esse padrão devem usar o mesmo `TransactionClient` recebido no callback.
+- O `companyId` não deve ser armazenado como estado mutável no `PrismaService`.
+- Os filtros explícitos por `companyId` continuam existindo na aplicação.
+- RLS será uma segunda barreira, não substituto dos filtros da aplicação.
+
+## 10.2. Separação entre runtime e migrations
+
+Os privilégios do PostgreSQL foram separados entre runtime HTTP e execução de migrations.
+
+`smartbusiness_app`:
+
+- Usado pelo NestJS/runtime.
+- Possui `LOGIN`.
+- Não é owner do banco nem das tabelas.
+- Usa `NOCREATEDB`.
+- Usa `NOCREATEROLE`.
+- Usa `NOBYPASSRLS`.
+- Não possui `CREATE` no schema `public`.
+- Não possui `TRUNCATE`, `REFERENCES` ou `TRIGGER`.
+- Possui `SELECT`, `INSERT`, `UPDATE` e `DELETE` somente nas tabelas de aplicação necessárias.
+- Não possui acesso a `_prisma_migrations`.
+
+`smartbusiness_migrate`:
+
+- Usado somente pelo Prisma CLI/migrations.
+- É owner do banco e dos objetos gerenciados pelo Prisma.
+- Controla `_prisma_migrations`.
+- Possui `CREATEDB` permitido no ambiente local/dev por causa de eventual shadow database.
+- Sua credencial não é usada pelo backend HTTP.
+
+## 10.3. Variáveis de conexão
+
+As conexões de runtime e migrations são separadas por variáveis diferentes.
+
+Decisões:
+
+- `DATABASE_URL` é usada pelo runtime `smartbusiness_app` no NestJS.
+- `MIGRATION_DATABASE_URL` é usada pelo `smartbusiness_migrate` no Prisma CLI.
+- O Prisma CLI deve falhar se `MIGRATION_DATABASE_URL` não existir.
+- Não há fallback para `DATABASE_URL`.
+- Valores reais de conexão permanecem fora do Git.
+
+## 10.4. Default privileges
+
+Objetos futuros criados por `smartbusiness_migrate` no schema `public` devem receber privilégios mínimos para o runtime.
+
+Decisões:
+
+- Tabelas futuras recebem `SELECT`, `INSERT`, `UPDATE` e `DELETE` para `smartbusiness_app`.
+- Sequences futuras recebem `USAGE` e `SELECT` para `smartbusiness_app`.
+- Não conceder `CREATE`, `TRUNCATE`, `REFERENCES` ou `TRIGGER` por default ao runtime.
 
 ---
 

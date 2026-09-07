@@ -89,7 +89,7 @@ Papéis iniciais previstos:
 ## 6. Autenticação e autorização ✅
 
 - Cadastro seguro de senha
-- Criptografia de senha
+- Hashing de senha com Argon2
 - Login
 - JWT
 - Rotas protegidas
@@ -114,19 +114,24 @@ Papéis iniciais previstos:
 
 Segurança:
 
-- Rate limiting, com atenção especial ao login
-- Security headers / Helmet
-- Configuração explícita de CORS
-- Definição e validação da estratégia de RLS para tabelas multiempresa
+- ✅ Rate limiting, com atenção especial ao login
+- ✅ Security headers / Helmet
+- ✅ Configuração explícita de CORS
+- ✅ Contexto transacional por empresa
+- ✅ Separação entre role runtime e role de migrations
+- ✅ Privilégios mínimos do `smartbusiness_app`
+- ✅ Separação `DATABASE_URL` / `MIGRATION_DATABASE_URL`
+- 🚧 Habilitação e testes reais de RLS
+- 🚧 Solução pré-tenant para login antes de RLS em `users`
 
 Integridade e concorrência:
 
-- Estratégia de optimistic locking
-- Transações para operações de estoque e vendas
-- Atualizações atômicas de estoque
-- Idempotência para operações críticas e integrações
-- Histórico obrigatório de movimentações de estoque
-- IA utilizando os mesmos serviços de domínio e validações
+- ⏳ Estratégia de optimistic locking
+- ⏳ Transações para operações de estoque e vendas
+- ⏳ Atualizações atômicas de estoque
+- ⏳ Idempotência para operações críticas e integrações
+- ⏳ Histórico obrigatório de movimentações de estoque
+- ⏳ IA utilizando os mesmos serviços de domínio e validações
 
 ## 8. Produtos ⏳
 
@@ -360,4 +365,4 @@ A etapa atual do Business AI é:
 
 > **Fase 3 — Catálogo e Estoque**
 
-O próximo objetivo técnico é realizar uma preparação de segurança, integridade e concorrência antes de iniciar o módulo de produtos.
+O próximo objetivo técnico imediato é habilitar e validar RLS inicialmente em `categories`, mantendo a preparação geral de segurança, integridade e concorrência em andamento antes do módulo de produtos.
