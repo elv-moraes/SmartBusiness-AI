@@ -3,12 +3,18 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const migrationDatabaseUrl = process.env["MIGRATION_DATABASE_URL"];
+
+if (!migrationDatabaseUrl) {
+  throw new Error("MIGRATION_DATABASE_URL is required for Prisma CLI");
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: migrationDatabaseUrl,
   },
 });
