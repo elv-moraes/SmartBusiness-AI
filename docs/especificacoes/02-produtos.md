@@ -77,7 +77,7 @@ Excluir categoria referenciada por produtos retorna 409 amigável; inclusive pro
 
 ## Estoque e integridade
 
-Saldo é zero na criação e não é editável por este CRUD. Não há endpoint de set stock, venda ou movimentação. Quantidades fracionárias não fazem parte deste contrato. O próximo módulo deverá usar operações transacionais e auditáveis próprias. A constraint não negativa protege o banco; não pretende implementar o futuro domínio de estoque por si só.
+Saldo é zero na criação e não é editável por este CRUD. Não há endpoint de set stock ou venda. Quantidades fracionárias não fazem parte deste contrato. O módulo separado de [Movimentações de Estoque](03-movimentacoes-de-estoque.md) atualiza o saldo por operações transacionais e auditáveis, sem incrementar version dos metadados. A constraint não negativa continua como proteção adicional.
 
 FK composta, unicidade, CHECKs e RLS estão descritos em [Banco e RLS de Products](../banco-de-dados/03-rls-products.md).
 
@@ -85,4 +85,4 @@ FK composta, unicidade, CHECKs e RLS estão descritos em [Banco e RLS de Product
 
 118 testes unitários em 16 suítes e 35 E2E/integração em 3 suítes: 153 aprovados. Incluem testes existentes de Categories/RLS, ProductsService/Controller, DTOs e cenários A–O no PostgreSQL real. E2E também passou com ordem aleatória (seed 20261101). Lint sem erros/avisos e build aprovado.
 
-RLS de users/login pré-tenant, Movimentações de Estoque, Vendas e idempotência continuam pendentes.
+Os resultados acima registram o rollout original de Products. Movimentações manuais de Estoque foram implementadas posteriormente (Issue #3). RLS de users/login pré-tenant, Vendas e idempotência global continuam pendentes.

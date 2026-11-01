@@ -238,7 +238,7 @@ Decisões:
 - Manter histórico suficiente para auditoria.
 - A quantidade atual pode existir para leitura rápida, mas deve permanecer consistente com as operações registradas.
 
-No CRUD de Products, `stockQuantity` inicia em zero, não pertence aos DTOs de criação/edição e campos proibidos retornam 400. `minimumStock` é configuração editável. As quantidades deste contrato são inteiros não negativos. Não há endpoint de saldo nem movimentações neste bloco. Produtos são desativados via `isActive`, sem DELETE HTTP.
+No CRUD de Products, `stockQuantity` inicia em zero, não pertence aos DTOs de criação/edição e campos proibidos retornam 400. `minimumStock` é configuração editável. As quantidades deste contrato são inteiros não negativos. Não há endpoint de sobrescrita de saldo. Produtos são desativados via `isActive`, sem DELETE HTTP.
 
 Preços de Products são persistidos em Decimal(12,2). Entrada monetária aceita somente strings decimais não negativas com até duas casas; saída sempre usa duas casas. Não há conversão para Number nem cálculos financeiros em ponto flutuante. [Contrato completo](especificacoes/02-produtos.md).
 
@@ -252,6 +252,20 @@ Decisões:
 
 - Operações críticas que possam ser reenviadas não devem ser processadas duas vezes.
 - A regra se aplica especialmente a vendas, pagamentos, webhooks e integrações futuras.
+
+## 13.1. Movimentações manuais de estoque implementadas
+
+`StockMovementsService` executa saldo e ledger no mesmo `withCompanyContext`/TransactionClient. Um UPDATE parametrizado incrementa/decrementa o saldo e verifica saldo suficiente/limite de INTEGER na própria condição. RETURNING fornece o novo saldo sob o bloqueio de escrita da linha; o saldo anterior é calculado pelo delta inteiro. Não há leitura prévia seguida de sobrescrita. Product.version continua exclusivo dos metadados; movimentações atualizam updatedAt, sem incrementar version.
+
+Idempotência usa chave única `(companyId, idempotencyKey)` e `pg_advisory_xact_lock(hashtextextended(companyId normalizado + ':' + chave, 0))` antes de ler a chave. Essa trava LOCAL à transação serializa somente comandos com a mesma empresa/chave, inclusive quando o replay de uma saída já não teria saldo. Colisões de hash apenas serializam comandos extras: RLS e filtros continuam garantindo isolamento. O CRUD de metadados não ganhou locking pessimista explícito.
+
+Comando comparado: productId (UUID normalizado), type, quantity e note com trim/vazio convertido para null. Mesmo comando retorna a movimentação original; diferença retorna 409. O autor original é preservado mesmo quando outro usuário autorizado repete o comando. Erros não reservam chave nem deixam saldo parcial. A constraint única é uma proteção adicional; a trava não substitui RLS, unicidade ou transação.
+
+Ledger possui apenas SELECT/INSERT para runtime e duas policies correspondentes, sem FORCE/PUBLIC/bypass. FK composta garante o tenant de Product. A conexão owner é usada somente nas migrations e no teardown restrito de fixtures, nunca em operações de domínio. `createdByUserId` registra JWT/sub, sem FK para users para preservar a autoria histórica e não alterar o fluxo de usuários/login. A imutabilidade declarada é para runtime; o owner permanece privilegiado.
+
+Tipos manuais: ENTRY, ADJUSTMENT_IN, ADJUSTMENT_OUT, LOSS e RETURN. SALE não existe neste enum nem na API. Produto inativo continua passível de correção de estoque: isActive não é usado como regra adicional de bloqueio neste escopo. Isso não habilita venda de produto inativo.
+
+[Contrato e testes](especificacoes/03-movimentacoes-de-estoque.md). Vendas e idempotência/concorrência globais continuam pendentes.
 
 ---
 

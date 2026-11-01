@@ -79,4 +79,4 @@ npm.cmd run build
 
 Resultados: format/validate aprovados, seis migrations aplicadas, lint sem erros/avisos, 118 testes unitários + 35 E2E/integração aprovados, build aprovado. O executor E2E mantém --experimental-vm-modules, com aviso experimental do Node já conhecido.
 
-RLS global não concluído: users/login pré-tenant permanecem pendentes. Estoque auditável e movimentações não fazem parte deste bloco.
+RLS global não concluído: users/login pré-tenant permanecem pendentes. Os resultados deste documento registram o rollout original de Products. O rollout posterior de estoque auditável está em [RLS de movimentações](04-rls-stock-movements.md).
