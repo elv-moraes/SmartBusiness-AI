@@ -201,6 +201,14 @@ Decisões:
 - Sequences futuras recebem `USAGE` e `SELECT` para `smartbusiness_app`.
 - Não conceder `CREATE`, `TRUNCATE`, `REFERENCES` ou `TRIGGER` por default ao runtime.
 
+## 10.5. Products
+
+Products está protegido por RLS com o mesmo contexto transacional de Categories, quatro policies exclusivas de `smartbusiness_app` e ausência de contexto fail closed. FORCE continua desabilitado. A FK `(company_id, category_id)` referencia `categories(company_id, id)` com DELETE/UPDATE RESTRICT, impedindo categoria de outra empresa também no banco.
+
+O rollout usa duas migrations. A estrutural revoga DML do runtime na nova tabela; a seguinte instala RLS/policies e concede apenas SELECT/INSERT/UPDATE/DELETE na mesma transação. Assim, falhar entre migrations não expõe a tabela sem RLS. Atributos Git preservam os bytes dos arquivos SQL para evitar divergência de checksum causada por `core.autocrlf`.
+
+RLS global permanece incompleto; `users` e login pré-tenant continuam pendentes. Detalhes: [RLS de produtos](banco-de-dados/03-rls-products.md).
+
 ---
 
 # 11. Concorrência e integridade
@@ -215,6 +223,8 @@ Decisões:
 - Usar bloqueio pessimista somente quando necessário.
 - Conflitos detectados devem resultar em resposta apropriada, como 409 quando aplicável.
 
+Implementado em Products: PATCH exige `version`; UPDATE condiciona atomicamente `id`, `companyId` e `version`, incrementando a versão em um. Retorna 409 se a versão ficou desatualizada e 404 se o produto não pertence ao tenant ou não existe. Não há locking pessimista explícito no CRUD. Categoria é validada no mesmo TransactionClient. Essa implementação não conclui concorrência de estoque/vendas.
+
 ---
 
 # 12. Estoque auditável
@@ -227,6 +237,10 @@ Decisões:
 - Entrada, venda, ajuste, perda, devolução e cancelamento devem gerar movimentações.
 - Manter histórico suficiente para auditoria.
 - A quantidade atual pode existir para leitura rápida, mas deve permanecer consistente com as operações registradas.
+
+No CRUD de Products, `stockQuantity` inicia em zero, não pertence aos DTOs de criação/edição e campos proibidos retornam 400. `minimumStock` é configuração editável. As quantidades deste contrato são inteiros não negativos. Não há endpoint de saldo nem movimentações neste bloco. Produtos são desativados via `isActive`, sem DELETE HTTP.
+
+Preços de Products são persistidos em Decimal(12,2). Entrada monetária aceita somente strings decimais não negativas com até duas casas; saída sempre usa duas casas. Não há conversão para Number nem cálculos financeiros em ponto flutuante. [Contrato completo](especificacoes/02-produtos.md).
 
 ---
 

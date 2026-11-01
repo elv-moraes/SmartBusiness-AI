@@ -1,0 +1,3 @@
+# Prisma records checksums of exact migration bytes. Preserve committed line
+# endings on every platform instead of applying core.autocrlf at checkout.
+backend/prisma/migrations/**/migration.sql -text
