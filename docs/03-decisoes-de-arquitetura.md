@@ -125,7 +125,9 @@ Decisões:
 - `companyId` continua vindo do usuário autenticado.
 - Services continuam filtrando dados por `companyId`.
 - RLS será uma segunda barreira de proteção no PostgreSQL, não um substituto dos filtros da aplicação.
-- O primeiro rollout de RLS será feito em `categories`.
+- O primeiro rollout de RLS foi habilitado e validado no PostgreSQL local somente em `public.categories`.
+- As quatro policies (`categories_select`, `categories_insert`, `categories_update`, `categories_delete`) são direcionadas exclusivamente a `smartbusiness_app`.
+- `ENABLE ROW LEVEL SECURITY` está ativo; `FORCE ROW LEVEL SECURITY` permanece desabilitado. O runtime, que não é owner e não possui bypass, está submetido ao RLS.
 - O runtime da API não deve ser owner das tabelas protegidas e deve permanecer com `BYPASSRLS=false`.
 - O contexto de empresa para RLS será obtido de `app.company_id`, definido dentro da transação.
 - As policies devem usar a forma defensiva `NULLIF(current_setting('app.company_id', true), '')::uuid`.
@@ -137,7 +139,7 @@ Decisões:
 
 ## 10.1. Contexto transacional multiempresa
 
-O `PrismaService` possui o helper `withCompanyContext(companyId, callback)` para executar operações com contexto de empresa preparado para o futuro RLS.
+O `PrismaService` possui o helper `withCompanyContext(companyId, callback)` para executar operações com contexto de empresa usado pelo RLS de `categories`.
 
 Decisões:
 
@@ -148,7 +150,9 @@ Decisões:
 - Todas as queries protegidas por esse padrão devem usar o mesmo `TransactionClient` recebido no callback.
 - O `companyId` não deve ser armazenado como estado mutável no `PrismaService`.
 - Os filtros explícitos por `companyId` continuam existindo na aplicação.
-- RLS será uma segunda barreira, não substituto dos filtros da aplicação.
+- RLS em `categories` é uma segunda barreira, não substituto dos filtros da aplicação.
+
+O rollout local e os testes automatizados estão registrados em [RLS de categorias](banco-de-dados/02-rls-categories.md). Ausência de contexto (inclusive valor vazio após reutilização de conexão) é fail closed. RLS em `users` continua pendente do fluxo seguro de login pré-tenant.
 
 ## 10.2. Separação entre runtime e migrations
 

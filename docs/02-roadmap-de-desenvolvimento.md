@@ -121,7 +121,8 @@ Segurança:
 - ✅ Separação entre role runtime e role de migrations
 - ✅ Privilégios mínimos do `smartbusiness_app`
 - ✅ Separação `DATABASE_URL` / `MIGRATION_DATABASE_URL`
-- 🚧 Habilitação e testes reais de RLS
+- ✅ RLS habilitado e validado localmente em `categories`, com quatro policies e testes automatizados de isolamento e CRUD HTTP
+- ⏳ Expansão de RLS às demais tabelas (RLS global ainda não concluído)
 - 🚧 Solução pré-tenant para login antes de RLS em `users`
 
 Integridade e concorrência:
@@ -365,4 +366,4 @@ A etapa atual do Business AI é:
 
 > **Fase 3 — Catálogo e Estoque**
 
-O próximo objetivo técnico imediato é habilitar e validar RLS inicialmente em `categories`, mantendo a preparação geral de segurança, integridade e concorrência em andamento antes do módulo de produtos.
+O primeiro rollout de RLS em `categories` está concluído e validado localmente. A preparação geral de segurança, integridade e concorrência continua em andamento antes do módulo de produtos. RLS em `users` depende da solução de login pré-tenant. Produtos não foi iniciado nesta etapa. Evidências e reprodução: [RLS de categorias](banco-de-dados/02-rls-categories.md).
