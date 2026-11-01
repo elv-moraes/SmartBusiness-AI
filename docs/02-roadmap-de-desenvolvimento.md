@@ -110,7 +110,7 @@ Papéis iniciais previstos:
 - Isolamento multiempresa
 - Testes
 
-## Preparação técnica antes de Produtos 🚧
+## Preparação técnica de segurança e integridade 🚧
 
 Segurança:
 
@@ -122,19 +122,20 @@ Segurança:
 - ✅ Privilégios mínimos do `smartbusiness_app`
 - ✅ Separação `DATABASE_URL` / `MIGRATION_DATABASE_URL`
 - ✅ RLS habilitado e validado localmente em `categories`, com quatro policies e testes automatizados de isolamento e CRUD HTTP
+- ✅ RLS habilitado e validado localmente em `products`, com FK composta para categoria da mesma empresa
 - ⏳ Expansão de RLS às demais tabelas (RLS global ainda não concluído)
 - 🚧 Solução pré-tenant para login antes de RLS em `users`
 
 Integridade e concorrência:
 
-- ⏳ Estratégia de optimistic locking
+- ✅ Optimistic locking no CRUD de Products (`version`, atualização atômica e conflito 409); expansão às demais operações continua pendente
 - ⏳ Transações para operações de estoque e vendas
 - ⏳ Atualizações atômicas de estoque
 - ⏳ Idempotência para operações críticas e integrações
 - ⏳ Histórico obrigatório de movimentações de estoque
 - ⏳ IA utilizando os mesmos serviços de domínio e validações
 
-## 8. Produtos ⏳
+## 8. Produtos ✅
 
 - Cadastro de produtos
 - Preço de compra
@@ -146,6 +147,8 @@ Integridade e concorrência:
 - Status ativo ou inativo
 - Isolamento multiempresa
 - Testes
+
+Implementado e validado localmente: preços decimais, código interno único por empresa, paginação/filtros, permissões, desativação por `isActive`, RLS e concorrência. Saldo inicia em zero e não pode ser definido/alterado pelo cliente. Contrato e evidências em [Produtos](especificacoes/02-produtos.md).
 
 ## 9. Movimentações de estoque ⏳
 
@@ -366,4 +369,4 @@ A etapa atual do Business AI é:
 
 > **Fase 3 — Catálogo e Estoque**
 
-O primeiro rollout de RLS em `categories` está concluído e validado localmente. A preparação geral de segurança, integridade e concorrência continua em andamento antes do módulo de produtos. RLS em `users` depende da solução de login pré-tenant. Produtos não foi iniciado nesta etapa. Evidências e reprodução: [RLS de categorias](banco-de-dados/02-rls-categories.md).
+Categories e Products estão implementados, com RLS validado localmente. Products possui optimistic locking, mas concorrência/estoque global não está concluído. Movimentações de Estoque permanece planejado e não foi iniciado neste bloco. RLS em `users` depende da solução de login pré-tenant. Evidências: [RLS de categorias](banco-de-dados/02-rls-categories.md), [Produtos](especificacoes/02-produtos.md) e [RLS de produtos](banco-de-dados/03-rls-products.md).

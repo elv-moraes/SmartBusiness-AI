@@ -275,4 +275,11 @@ describe('CategoriesService', () => {
       },
     });
   });
+
+  it('should return conflict when products reference the category', async () => {
+    txMock.category.deleteMany.mockRejectedValue({ code: 'P2003' });
+    await expect(service.remove(categoryId, companyId)).rejects.toThrow(
+      ConflictException,
+    );
+  });
 });

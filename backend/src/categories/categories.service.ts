@@ -75,18 +75,27 @@ export class CategoriesService {
   }
 
   async remove(id: string, companyId: string): Promise<void> {
-    await this.prisma.withCompanyContext(companyId, async (tx) => {
-      const result = await tx.category.deleteMany({
-        where: {
-          id,
-          companyId,
-        },
-      });
+    try {
+      await this.prisma.withCompanyContext(companyId, async (tx) => {
+        const result = await tx.category.deleteMany({
+          where: {
+            id,
+            companyId,
+          },
+        });
 
-      if (result.count === 0) {
-        throw new NotFoundException('Categoria não encontrada.');
+        if (result.count === 0) {
+          throw new NotFoundException('Categoria não encontrada.');
+        }
+      });
+    } catch (error: unknown) {
+      if (this.hasPrismaErrorCode(error, 'P2003')) {
+        throw new ConflictException(
+          'Categoria vinculada a produtos não pode ser excluída.',
+        );
       }
-    });
+      throw error;
+    }
   }
 
   private async findOneInTransaction(

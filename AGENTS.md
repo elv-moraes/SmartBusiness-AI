@@ -9,8 +9,10 @@
 - O banco de dados usa PostgreSQL + Prisma.
 - O frontend planejado usa React + TypeScript + Vite + Tailwind CSS.
 - A etapa atual do roadmap é a Fase 3: Catálogo e Estoque.
-- O módulo de categorias está concluído.
-- O próximo objetivo técnico indicado pelo roadmap é realizar uma etapa curta de hardening de segurança e definição das regras de integridade/concorrência antes de iniciar o módulo de produtos.
+- Os módulos de categorias e produtos estão concluídos, com RLS local validado em ambas as tabelas.
+- Produtos usa preços decimais em strings na API, vínculo composto com categoria, optimistic locking por version e desativação por isActive.
+- O saldo de produtos nasce em zero e não é editável pelo CRUD. Movimentações de Estoque permanece planejado; não iniciar sem tarefa explícita.
+- RLS de users/login pré-tenant e as regras globais de estoque, vendas e idempotência continuam pendentes.
 
 ## Regras de Arquitetura e Segurança
 
