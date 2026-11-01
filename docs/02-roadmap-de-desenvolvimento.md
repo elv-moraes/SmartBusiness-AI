@@ -123,16 +123,16 @@ Segurança:
 - ✅ Separação `DATABASE_URL` / `MIGRATION_DATABASE_URL`
 - ✅ RLS habilitado e validado localmente em `categories`, com quatro policies e testes automatizados de isolamento e CRUD HTTP
 - ✅ RLS habilitado e validado localmente em `products`, com FK composta para categoria da mesma empresa
+- ✅ RLS de `stock_movements`, ledger com apenas SELECT/INSERT para runtime
 - ⏳ Expansão de RLS às demais tabelas (RLS global ainda não concluído)
 - 🚧 Solução pré-tenant para login antes de RLS em `users`
 
 Integridade e concorrência:
 
 - ✅ Optimistic locking no CRUD de Products (`version`, atualização atômica e conflito 409); expansão às demais operações continua pendente
-- ⏳ Transações para operações de estoque e vendas
-- ⏳ Atualizações atômicas de estoque
-- ⏳ Idempotência para operações críticas e integrações
-- ⏳ Histórico obrigatório de movimentações de estoque
+- ✅ Transações e atualizações atômicas para movimentações manuais de estoque; Vendas permanece pendente
+- ✅ Idempotência por empresa/chave nas movimentações manuais; idempotência global e integrações permanecem pendentes
+- ✅ Histórico imutável de movimentações manuais de estoque
 - ⏳ IA utilizando os mesmos serviços de domínio e validações
 
 ## 8. Produtos ✅
@@ -150,16 +150,17 @@ Integridade e concorrência:
 
 Implementado e validado localmente: preços decimais, código interno único por empresa, paginação/filtros, permissões, desativação por `isActive`, RLS e concorrência. Saldo inicia em zero e não pode ser definido/alterado pelo cliente. Contrato e evidências em [Produtos](especificacoes/02-produtos.md).
 
-## 9. Movimentações de estoque ⏳
+## 9. Movimentações manuais de estoque ✅
 
-- Entrada de estoque
-- Saída por venda
-- Ajuste manual
-- Perda
-- Devolução
-- Histórico de movimentações
-- Proibição de alteração de estoque sem movimentação
-- Alertas de estoque baixo
+- Entrada, ajuste positivo/negativo, perda e devolução de cliente
+- Ledger imutável para runtime, vínculo composto com Product e RLS
+- Saldo atualizado atomicamente junto com o histórico
+- Idempotência, proteção contra saldo negativo e testes concorrentes
+- Proibição de sobrescrita de saldo pelo CRUD de Products
+- ⏳ Saída por venda/SALE: futura implementação no domínio de Vendas
+- ⏳ Alertas de estoque baixo: fora do escopo da Issue #3
+
+Escopo da [Issue #3](https://github.com/elv-moraes/SmartBusiness-AI/issues/3) concluído e validado localmente. Contrato e evidências: [Movimentações de Estoque](especificacoes/03-movimentacoes-de-estoque.md).
 
 ---
 
@@ -369,4 +370,4 @@ A etapa atual do Business AI é:
 
 > **Fase 3 — Catálogo e Estoque**
 
-Categories e Products estão implementados, com RLS validado localmente. Products possui optimistic locking, mas concorrência/estoque global não está concluído. Movimentações de Estoque permanece planejado e não foi iniciado neste bloco. RLS em `users` depende da solução de login pré-tenant. Evidências: [RLS de categorias](banco-de-dados/02-rls-categories.md), [Produtos](especificacoes/02-produtos.md) e [RLS de produtos](banco-de-dados/03-rls-products.md).
+Categories, Products e Movimentações manuais de Estoque estão implementados e validados localmente, com RLS. Products possui optimistic locking; movimentações usam saldo atômico e idempotência próprios. Concorrência/idempotência globais, Vendas/SALE e alertas permanecem pendentes. RLS em `users` depende da solução de login pré-tenant. Evidências: [Produtos](especificacoes/02-produtos.md), [Movimentações de Estoque](especificacoes/03-movimentacoes-de-estoque.md) e [RLS de estoque](banco-de-dados/04-rls-stock-movements.md).

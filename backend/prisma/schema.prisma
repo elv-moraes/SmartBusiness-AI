@@ -15,6 +15,14 @@ enum UserRole {
   EMPLOYEE
 }
 
+enum StockMovementType {
+  ENTRY
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  LOSS
+  RETURN
+}
+
 model Company {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
@@ -24,9 +32,10 @@ model Company {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  users      User[]
-  categories Category[]
-  products   Product[]
+  users          User[]
+  categories     Category[]
+  products       Product[]
+  stockMovements StockMovement[]
 
   @@map("companies")
 }
@@ -62,13 +71,37 @@ model Product {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  company  Company  @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  category Category @relation(fields: [companyId, categoryId], references: [companyId, id], onDelete: Restrict, onUpdate: Restrict)
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  category       Category        @relation(fields: [companyId, categoryId], references: [companyId, id], onDelete: Restrict, onUpdate: Restrict)
+  stockMovements StockMovement[]
 
+  @@unique([companyId, id])
   @@unique([companyId, internalCode])
   @@index([companyId, categoryId])
   @@index([companyId, name, id])
   @@map("products")
+}
+
+model StockMovement {
+  id               String            @id @default(uuid()) @db.Uuid
+  companyId        String            @map("company_id") @db.Uuid
+  productId        String            @map("product_id") @db.Uuid
+  type             StockMovementType
+  quantity         Int
+  previousQuantity Int               @map("previous_quantity")
+  newQuantity      Int               @map("new_quantity")
+  note             String?           @db.VarChar(500)
+  idempotencyKey   String            @map("idempotency_key") @db.VarChar(128)
+  createdByUserId  String            @map("created_by_user_id") @db.Uuid
+  createdAt        DateTime          @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  product Product @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, createdAt, id])
+  @@index([companyId, productId, createdAt, id])
+  @@map("stock_movements")
 }
 
 model User {

@@ -11,8 +11,9 @@
 - A etapa atual do roadmap é a Fase 3: Catálogo e Estoque.
 - Os módulos de categorias e produtos estão concluídos, com RLS local validado em ambas as tabelas.
 - Produtos usa preços decimais em strings na API, vínculo composto com categoria, optimistic locking por version e desativação por isActive.
-- O saldo de produtos nasce em zero e não é editável pelo CRUD. Movimentações de Estoque permanece planejado; não iniciar sem tarefa explícita.
-- RLS de users/login pré-tenant e as regras globais de estoque, vendas e idempotência continuam pendentes.
+- O saldo de produtos nasce em zero e não é editável pelo CRUD. Movimentações manuais de Estoque estão implementadas com ledger imutável para o runtime, RLS, transações atômicas e idempotência por empresa.
+- Movimentações usam ENTRY, ADJUSTMENT_IN, ADJUSTMENT_OUT, LOSS e RETURN; não incrementam Product.version. Reenvios exigem Idempotency-Key e são serializados por trava transacional de empresa/chave.
+- RLS de users/login pré-tenant, Vendas/SALE, alertas de estoque e idempotência/concorrência globais continuam pendentes. Não avançar para Vendas sem tarefa explícita.
 
 ## Regras de Arquitetura e Segurança
 
